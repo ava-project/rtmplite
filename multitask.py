@@ -56,7 +56,7 @@ two unrelated tasks to run concurrently:
   ...     while True:
   ...         print message
   ...         yield
-  ... 
+  ...
   >>> multitask.add(printer('hello'))
   >>> multitask.add(printer('goodbye'))
   >>> multitask.run()
@@ -103,26 +103,26 @@ raised within a child task is propagated to its parent.  For example:
   ...         yield raise_exception()
   ...     except Exception, e:
   ...         print 'caught exception: %s' % e
-  ... 
+  ...
   >>> def return_none():
   ...     yield
   ...     # do nothing
   ...     # or return
   ...     # or raise StopIteration
   ...     # or raise StopIteration(None)
-  ... 
+  ...
   >>> def return_one():
   ...     yield
   ...     raise StopIteration(1)
-  ... 
+  ...
   >>> def return_many():
   ...     yield
   ...     raise StopIteration(2, 3)  # or raise StopIteration((2, 3))
-  ... 
+  ...
   >>> def raise_exception():
   ...     yield
   ...     raise RuntimeError('foo')
-  ... 
+  ...
   >>> multitask.add(parent())
   >>> multitask.run()
   None
@@ -321,7 +321,7 @@ class FDReady(YieldCondition):
 
 
 def _is_file_descriptor(fd):
-    return isinstance(fd, (int, long))
+    return isinstance(fd, int)
 
 
 def readable(fd, timeout=None):
@@ -701,10 +701,10 @@ class SmartQueue(object):
     A multi-producer, multi-consumer FIFO queue (similar to
     Queue.Queue) that can be used for exchanging data between tasks.
     The difference with Queue is that this implements filtering criteria
-    on get and allows multiple get to be signalled for the same put. 
+    on get and allows multiple get to be signalled for the same put.
     On the downside, this uses list instead of deque and has lower
     performance.
-    
+
     """
 
     def __init__(self, contents=(), maxsize=0):
@@ -728,8 +728,8 @@ class SmartQueue(object):
     def _get(self, criteria=None):
         #self._pending = filter(lambda x: x[1]<=now, self._pending) # remove expired ones
         if criteria:
-            found = filter(lambda x: criteria(x), self._pending)   # check any matching criteria
-            if found: 
+            found = [x for x in self._pending if criteria(x)]   # check any matching criteria
+            if found:
                 self._pending.remove(found[0])
                 return found[0]
             else:
@@ -775,9 +775,9 @@ class SmartQueue(object):
         when item has been added to the queue.  If timeout is not
         None, a Timeout exception will be raised in the yielding task
         if no space is available after timeout seconds have elapsed.
-        TODO: Otherwise if space is available, the timeout specifies how 
+        TODO: Otherwise if space is available, the timeout specifies how
         long to keep the item in the queue before discarding it if it
-        is not fetched in a get. In this case it doesnot throw exception. 
+        is not fetched in a get. In this case it doesnot throw exception.
         For example:
 
           try:
@@ -962,7 +962,7 @@ class TaskManager(object):
                     output = task.throw(*exc_info)
                 else:
                     output = task.send(input)
-            except StopIteration, e:
+            except StopIteration as e:
                 if isinstance(task, _ChildTask):
                     if not e.args:
                         output = None
@@ -1003,7 +1003,7 @@ class TaskManager(object):
         except (TypeError, ValueError):
             self._remove_bad_file_descriptors()
             return False
-        except (select.error, IOError), err:
+        except (select.error, IOError) as err:
             if err[0] == errno.EINTR:
                 return False
             elif ((err[0] == errno.EBADF) or
@@ -1217,8 +1217,8 @@ if __name__ == '__main__':
         import socket
 
     def printer(name):
-        for i in xrange(1, 4):
-            print '%s:\t%d' % (name, i)
+        for i in range(1, 4):
+            print('%s:\t%d' % (name, i))
             yield
 
     t = TaskManager()
@@ -1229,33 +1229,33 @@ if __name__ == '__main__':
     queue = Queue()
 
     def receiver():
-        print 'receiver started'
-        print 'receiver received: %s' % (yield queue.get())
-        print 'receiver finished'
+        print('receiver started')
+        print('receiver received: %s' % (yield queue.get()))
+        print('receiver finished')
 
     def sender():
-        print 'sender started'
+        print('sender started')
         yield queue.put('from sender')
-        print 'sender finished'
+        print('sender finished')
 
     def bad_descriptor():
-        print 'bad_descriptor running'
+        print('bad_descriptor running')
         try:
             yield readable(12)
         except:
-            print 'exception in bad_descriptor:', sys.exc_info()[1]
+            print('exception in bad_descriptor:', sys.exc_info()[1])
 
     def sleeper():
-        print 'sleeper started'
+        print('sleeper started')
         yield sleep(1)
-        print 'sleeper finished'
+        print('sleeper finished')
 
     def timeout_immediately():
-        print 'timeout_immediately running'
+        print('timeout_immediately running')
         try:
             yield Queue().get(timeout=0)
         except Timeout:
-            print 'timeout_immediately timed out'
+            print('timeout_immediately timed out')
 
     t2 = TaskManager()
     t2.add(receiver())
@@ -1265,11 +1265,11 @@ if __name__ == '__main__':
     t2.add(timeout_immediately())
 
     def parent():
-        print 'child returned: %s' % ((yield child()),)
+        print('child returned: %s' % ((yield child()),))
         try:
             yield child(raise_exc=True)
         except:
-            print 'exception in child:', sys.exc_info()[1]
+            print('exception in child:', sys.exc_info()[1])
 
     def child(raise_exc=False):
         yield
